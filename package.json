@@ -1,0 +1,22 @@
+{
+  "name": "fever",
+  "version": "0.0.0",
+  "description": "Fever: A highly optimized asset pipeline from BigPipe",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js"
+  },
+  "author": "Arnout Kazemier",
+  "license": "MIT",
+  "devDependencies": {
+    "assume": "1.1.x",
+    "mocha": "2.1.x",
+    "pre-commit": "1.0.x"
+  },
+  "dependencies": {
+    "diagnostics": "0.0.x",
+    "eventemitter3": "0.1.x",
+    "fusing": "1.0.x",
+    "supply": "0.0.x"
+  }
+}

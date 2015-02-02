@@ -17,7 +17,9 @@
     "diagnostics": "0.0.x",
     "eventemitter3": "0.1.x",
     "fusing": "1.0.x",
-    "hotpath": "0.0.0",
-    "supply": "0.0.x"
+    "hotpath": "0.0.x",
+    "supply": "0.0.x",
+    "supreme": "0.0.x",
+    "zipline": "1.0.x"
   }
 }

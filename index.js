@@ -41,7 +41,7 @@ function Factory(server, options) {
   options = options || {};
 
   this.hotpath = new HotPath(options.hotpath);    // Internal cache system.
-  this.fs = options.engine || require('./sfs');   // File system.
+  this.fs = options.engine || require('supreme'); // File system.
   this.options = options;                         // Backup of the options.
   this.server = server;                           // The HTTP server we attach on.
   this.timers = {};                               // Active timers.
@@ -155,7 +155,7 @@ Factory.prototype.mount = function mount(server, options) {
 
   var selfie = this;
 
-  supply.detect(server, 'zipline', require('./zipline'), options);
+  supply.detect(server, 'zipline', require('zipline'), options);
   supply.detect(server, 'sfs', function sfs(req, res, next) {
     req.uri = req.uri || parse(req.url);
 

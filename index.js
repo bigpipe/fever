@@ -1,7 +1,7 @@
 'use strict';
 
 var debug = require('diagnostics')('sfs:factory')
-  , HotPath = require('./hotpath')
+  , HotPath = require('hotpath')
   , parse = require('url').parse
   , supply = require('supply')
   , fuse = require('fusing')

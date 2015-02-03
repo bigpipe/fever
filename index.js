@@ -1,6 +1,7 @@
 'use strict';
 
-var debug = require('diagnostics')('sfs:factory')
+var debug = require('diagnostics')('fever:factory')
+  , TickTock = require('tick-tock')
   , HotPath = require('hotpath')
   , parse = require('url').parse
   , supply = require('supply')

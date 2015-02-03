@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('diagnostics')('sfs:file')
+var debug = require('diagnostics')('fever:file')
   , hash = require('crypto').createHash
   , path = require('path');
 

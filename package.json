@@ -4,7 +4,10 @@
   "description": "Fever: A highly optimized asset pipeline from BigPipe",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "mocha test.js",
+    "watch": "mocha --watch test.js",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- test.js",
+    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- test.js"
   },
   "author": "Arnout Kazemier",
   "license": "MIT",

@@ -20,6 +20,7 @@
     "hotpath": "0.0.x",
     "supply": "0.0.x",
     "supreme": "0.0.x",
+    "tick-tock": "0.1.x",
     "zipline": "1.0.x"
   }
 }

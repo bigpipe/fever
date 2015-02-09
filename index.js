@@ -1,26 +1,12 @@
 'use strict';
 
 var debug = require('diagnostics')('fever:factory')
+  , EventEmitter = require('eventemitter3')
   , TickTock = require('tick-tock')
   , HotPath = require('hotpath')
   , parse = require('url').parse
-  , supply = require('supply')
   , fuse = require('fusing')
   , File = require('./file');
-
-/**
- * Handy helper function for creating optional callbacks.
- *
- * @param {Function} fn Optional callback.
- * @param {String} msg Optional failure message.
- * @returns {Function}
- * @api private
- */
-function optional(fn, msg) {
-  return fn || function nope(err) {
-    if (err) debug(msg || 'Missing callback for failed operation', err);
-  };
-}
 
 /**
  * Our file factory.
@@ -31,23 +17,20 @@ function optional(fn, msg) {
  * - engine, {FileSystem}, The file system where we store and get our files.
  *
  * @constructor
- * @param {Server} server HTTP/HTTPS server instance.
  * @param {Object} options Factory configuration.
  * @api private
  */
-function Factory(server, options) {
-  if (!this) return new Factory(server, options);
+function Factory(options) {
+  if (!this) return new Factory(options);
 
   var selfie = this;
   options = options || {};
 
-  this.hotpath = new HotPath(options.hotpath);    // Internal cache system.
-  this.fs = options.engine || require('supreme'); // File system.
-  this.options = options;                         // Backup of the options.
-  this.server = server;                           // The HTTP server we attach on.
-  this.timers = {};                               // Active timers.
-  this.files = [];                                // Active files.
-  this.mount(this.server);
+  this.fs = options.engine || require('supreme');   // File system.
+  this.hotpath = new HotPath(options.hotpath);      // Internal cache system.
+  this.timers = new TickTock(this);                 // Timer management.
+  this.options = options;                           // Backup of the options.
+  this.files = [];                                  // Active files.
 
   //
   // Expose the File constructor which now contains a reference to the newly
@@ -58,15 +41,29 @@ function Factory(server, options) {
   };
 
   fuse(this.File, File);
-  this.mount();
 }
 
 //
 // Supply provides our middleware and plugin system, so we're going to inherit
 // from it.
 //
-Factory.prototype.__proto__ = require('eventemitter3').prototype;
-supply.middleware(Factory, { add: 'transform', run: 'run' });
+Factory.prototype = new EventEmitter();
+Factory.prototype.constructor = Factory;
+Factory.prototype.__proto__ = require('supply').prototype;
+
+/**
+ * Handy helper function for creating optional callbacks.
+ *
+ * @param {Function} fn Optional callback.
+ * @param {String} msg Optional failure message.
+ * @returns {Function}
+ * @api private
+ */
+Factory.prototype.optional = function optional(fn, msg) {
+  return fn || function nope(err) {
+    if (err) debug(msg || 'Missing callback for failed operation', err);
+  };
+};
 
 /**
  * Replace the internal file system.
@@ -101,7 +98,7 @@ Factory.prototype.get = function get(path) {
  * @api public
  */
 Factory.prototype.cache = function cache(fn) {
-  fn = optional(fn, 'Failed to update the cache');
+  fn = this.optional(fn, 'Failed to update the cache');
 
   var sorted = this.files.sort(function sort(a, b) {
     return a.requested - b.requested;
@@ -121,52 +118,31 @@ Factory.prototype.cache = function cache(fn) {
 };
 
 /**
- * Clear the any of the given timeouts.
+ * Attempt to mount the factory to a given HTTP server instance. If no server is
+ * given we will return a middleware layer that is compatible with connect.
  *
- * @arguments {String} names of timeouts that needs to be cleared.
- * @returns {Factory}
- * @api public
- */
-Factory.prototype.clearTimeout = function clearTimeout() {
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    clearTimeout(this.timers[arguments[i]]);
-    clearInterval(this.timers[arguments[i]]);
-    this.timers[arguments[i]] = null;
-  }
-
-  return this;
-};
-
-/**
- * Attach the factory instance to a given HTTP server instance. We assume that
- * these HTTP servers work with an `supply` or `connect` based middleware system.
- * The compatibility mode can be set using the options object:
- *
- * - connect, `false`, Use the connect based middleware system.
- * - add, `undefined`, Use the given method name for adding middleware.
- *
- * @param {Server} server HTTP server instance.
- * @param {Object} options Optional configuration.
- * @returns {Factory}
+ * @param {HTTPServer} server A HTTP server which understands middleware.
+ * @returns {Function} The middleware layer we've generated.
  * @api public
  */
 Factory.prototype.mount = function mount(server, options) {
-  if (!options) options = this.options;
-  if (!server) server = this.server;
-
   var selfie = this;
 
-  supply.detect(server, 'zipline', require('zipline'), options);
-  supply.detect(server, 'sfs', function sfs(req, res, next) {
+  function fever(req, res, next) {
     req.uri = req.uri || parse(req.url);
 
     var file = selfie.alias(req.uri.pathname);
     if (!file || 'GET' !== req.method) return next();
 
     file.forward(res, { gzip: req.zipline, headers: req.headers });
-  }, options);
+  }
 
-  return this;
+  if (server && 'function' === typeof server.use) {
+    server.use('zipline', require('zipline'), options);
+    server.use('fever', fever);
+  }
+
+  return fever;
 };
 
 //

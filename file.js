@@ -1,6 +1,7 @@
 'use strict';
 
 var debug = require('diagnostics')('fever:file')
+  , EventEmitter = require('eventemitter3')
   , hash = require('crypto').createHash
   , path = require('path');
 
@@ -32,8 +33,9 @@ function File(factory, path, options) {
 //
 // File inherits from the EventEmitter so people can hook in to these changes.
 //
-File.prototype.__proto__ = require('eventemitter3').prototype;
-require('supply').middleware(File, { add: 'transform', run: 'run' });
+File.prototype = new EventEmitter();
+File.prototype.constructor = File;
+File.prototype.__proto__ = require('supply').prototype;
 
 /**
  * Generate a fingerprint of the current content.

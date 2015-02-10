@@ -3,6 +3,7 @@
 var debug = require('diagnostics')('fever:factory')
   , EventEmitter = require('eventemitter3')
   , TickTock = require('tick-tock')
+  , destroy = require('demolish')
   , HotPath = require('hotpath')
   , parse = require('url').parse
   , fuse = require('fusing')
@@ -17,11 +18,11 @@ var debug = require('diagnostics')('fever:factory')
  * - engine, {FileSystem}, The file system where we store and get our files.
  *
  * @constructor
- * @param {Object} options Factory configuration.
+ * @param {Object} options Fever configuration.
  * @api private
  */
-function Factory(options) {
-  if (!this) return new Factory(options);
+function Fever(options) {
+  if (!this) return new Fever(options);
 
   var selfie = this;
   options = options || {};
@@ -34,7 +35,7 @@ function Factory(options) {
 
   //
   // Expose the File constructor which now contains a reference to the newly
-  // created Factory.
+  // created Fever.
   //
   this.File = function File(path, options) {
     this.fuse([selfie, path, options]);
@@ -47,9 +48,9 @@ function Factory(options) {
 // Supply provides our middleware and plugin system, so we're going to inherit
 // from it.
 //
-Factory.prototype = new EventEmitter();
-Factory.prototype.constructor = Factory;
-Factory.prototype.__proto__ = require('supply').prototype;
+Fever.prototype = new EventEmitter();
+Fever.prototype.constructor = Fever;
+Fever.prototype.__proto__ = require('supply').prototype;
 
 /**
  * Handy helper function for creating optional callbacks.
@@ -59,7 +60,7 @@ Factory.prototype.__proto__ = require('supply').prototype;
  * @returns {Function}
  * @api private
  */
-Factory.prototype.optional = function optional(fn, msg) {
+Fever.prototype.optional = function optional(fn, msg) {
   return fn || function nope(err) {
     if (err) debug(msg || 'Missing callback for failed operation', err);
   };
@@ -69,10 +70,10 @@ Factory.prototype.optional = function optional(fn, msg) {
  * Replace the internal file system.
  *
  * @param {FileSystem} fs The file system that we should use for the files.
- * @returns {Factory}
+ * @returns {Fever}
  * @api public
  */
-Factory.prototype.engine = function engine(fs) {
+Fever.prototype.engine = function engine(fs) {
   this.fs = fs;
 
   return this;
@@ -85,7 +86,7 @@ Factory.prototype.engine = function engine(fs) {
  * @returns {Array}
  * @api private
  */
-Factory.prototype.get = function get(path) {
+Fever.prototype.get = function get(path) {
   return [];
 };
 
@@ -94,10 +95,10 @@ Factory.prototype.get = function get(path) {
  * Every time a file is requested we increment the requested count.
  *
  * @param {Function} fn Optional completion callback.
- * @returns {Factory}
+ * @returns {Fever}
  * @api public
  */
-Factory.prototype.cache = function cache(fn) {
+Fever.prototype.cache = function cache(fn) {
   fn = this.optional(fn, 'Failed to update the cache');
 
   var sorted = this.files.sort(function sort(a, b) {
@@ -125,7 +126,7 @@ Factory.prototype.cache = function cache(fn) {
  * @returns {Function} The middleware layer we've generated.
  * @api public
  */
-Factory.prototype.mount = function mount(server, options) {
+Fever.prototype.mount = function mount(server, options) {
   var selfie = this;
 
   function fever(req, res, next) {
@@ -145,7 +146,10 @@ Factory.prototype.mount = function mount(server, options) {
   return fever;
 };
 
+Fever.prototype.destroy = destroy('fs, hotpath, timers, options, files');
+
 //
 // Expose the module.
 //
-module.exports = Factory;
+Fever.File = File;
+module.exports = Fever;

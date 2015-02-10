@@ -33,9 +33,10 @@ function File(factory, path, options) {
 //
 // File inherits from the EventEmitter so people can hook in to these changes.
 //
-File.prototype = new EventEmitter();
-File.prototype.constructor = File;
 File.prototype.__proto__ = require('supply').prototype;
+Object.keys(EventEmitter.prototype).forEach(function each(key) {
+  File.prototype[key] = EventEmitter.prototype[key];
+});
 
 /**
  * Generate a fingerprint of the current content.

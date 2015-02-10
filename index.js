@@ -48,9 +48,10 @@ function Fever(options) {
 // Supply provides our middleware and plugin system, so we're going to inherit
 // from it.
 //
-Fever.prototype = new EventEmitter();
-Fever.prototype.constructor = Fever;
 Fever.prototype.__proto__ = require('supply').prototype;
+Object.keys(EventEmitter.prototype).forEach(function each(key) {
+  Fever.prototype[key] = EventEmitter.prototype[key];
+});
 
 /**
  * Handy helper function for creating optional callbacks.

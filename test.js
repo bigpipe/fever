@@ -1,7 +1,8 @@
 describe('File', function () {
   'use strict';
 
-  var assume = require('assume');
+  var assume = require('assume')
+    , File = require('./file');
 
   it('has a middleware system');
   it('is an event emitter');
@@ -33,9 +34,37 @@ describe('Fever', function () {
   'use strict';
 
   var assume = require('assume')
-    , Fever = require('./');
+    , Fever = require('./')
+    , fever;
+
+  beforeEach(function each() {
+    fever = new Fever();
+  });
+
+  afterEach(function each() {
+    fever.destroy();
+  });
 
   it('is exported as a function', function () {
     assume(Fever).is.a('function');
+  });
+
+  it('exposes the .File', function () {
+    assume(Fever.File).is.a('function');
+  });
+
+  it('inherits from Supply', function () {
+    assume(fever).is.instanceOf(require('supply'));
+  });
+
+  it('is an EventEmitter', function (next) {
+    fever.once('foo', function (arg) {
+      assume(arg).equals('bar');
+      assume(this).equals(fever);
+
+      next();
+    });
+
+    fever.emit('foo', 'bar');
   });
 });

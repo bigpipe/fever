@@ -1,6 +1,6 @@
 'use strict';
 
-var debug = require('diagnostics')('fever:factory')
+var debug = require('diagnostics')('fever')
   , EventEmitter = require('eventemitter3')
   , TickTock = require('tick-tock')
   , destroy = require('demolish')

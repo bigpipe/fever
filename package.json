@@ -24,6 +24,7 @@
     "eventemitter3": "0.1.x",
     "fusing": "1.0.x",
     "hotpath": "0.0.x",
+    "source-map": "0.3.x",
     "supply": "0.0.x",
     "supreme": "0.0.x",
     "tick-tock": "0.1.x",

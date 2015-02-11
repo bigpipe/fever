@@ -11,22 +11,21 @@ var debug = require('diagnostics')('fever:file')
  * @TODO: Add the path to the contents.
  *
  * @constructor
- * @param {Factory} factory The factory that creates and manages the files.
+ * @param {Fever} fever The fever that creates and manages the files.
  * @param {String} path Location of the file.
  * @param {Object} options File configuration.
  * @api public
  */
-function File(factory, path, options) {
+function File(fever, path, options) {
   if (!this) return new File(path, options);
   options = options || {};
 
   this.requested = 0;           // The amount of x this file has been requested.
   this.contents = [];           // Various of file that we should read.
-  this.factory = null;          // Reference to the factory instance.
+  this.fever = fever;           // Reference to the fever instance.
   this.alias = '';              // Alias of the file, also known as fingerprint.
-  this.factory = factory;       // Reference to the factory.
 
-  factory.emit('add', this);
+  fever.emit('add', this);
   if (path) this.push(path);
 }
 
@@ -67,7 +66,7 @@ File.prototype.fingerprinter = function fingerprinter(content) {
  * @api public
  */
 File.prototype.concat = function concat() {
-  var file = new File(this.factory)
+  var file = new File(this.fever)
     , files = Array.prototype.slice.call(arguments, 0);
 
   //
@@ -83,8 +82,8 @@ File.prototype.concat = function concat() {
   files.forEach(function each(old) {
     old.destroy();
   });
-  this.destroy();
 
+  this.destroy();
   return file;
 };
 
@@ -126,13 +125,13 @@ File.prototype.forward = function forward(what, options) {
 };
 
 /**
- * Destroy the file instance and un-register it in the factory.
+ * Destroy the file instance and un-register it in the fever.
  *
  * @returns {File}
  * @api public
  */
 File.prototype.destroy = function destroy() {
-  this.factory.emit('remove', this);
+  this.fever.emit('remove', this);
 
   return this;
 };

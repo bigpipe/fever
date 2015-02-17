@@ -147,6 +147,16 @@ Fever.prototype.mount = function mount(server, options) {
   return fever;
 };
 
+/**
+ * Destroy and clean-up things.
+ *
+ * @TODO cleanup Supply based data.
+ * @TODO cleanup EventEmitter properties.
+ *
+ * @type {Function}
+ * @returns {Boolean}
+ * @api public
+ */
 Fever.prototype.destroy = destroy('fs, hotpath, timers, options, files');
 
 //

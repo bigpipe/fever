@@ -18,8 +18,21 @@ describe('File', function () {
     file.destroy();
   });
 
-  it('has a middleware system');
-  it('is an event emitter');
+  it('is instanceof supply', function () {
+    assume(file).is.instanceOf(require('supply'));
+  });
+
+  it('is an EventEmitter', function (next) {
+    file.once('foo', function (arg) {
+      assume(arg).equals('bar');
+      assume(this).equals(file);
+
+      next();
+    });
+
+    file.emit('foo', 'bar');
+  });
+
   it('adds it self to the factory when created');
 
   describe('#length', function () {
@@ -30,6 +43,14 @@ describe('File', function () {
     it('increases when a new file is added', function () {
       file.push(path.join(__dirname, 'fixtures', 'events.js'));
       assume(file.length).equals(8921);
+    });
+
+    it('decreases when a file is removed', function () {
+      file.push(path.join(__dirname, 'fixtures', 'events.js'));
+      assume(file.length).equals(8921);
+
+      file.pop();
+      assume(file.length).equals(0);
     });
   });
 

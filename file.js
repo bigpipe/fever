@@ -27,6 +27,7 @@ function File(fever, file, options) {
   this.fever = fever;           // Reference to the fever instance.
   this.alias = '';              // Alias of the file, also known as fingerprint.
   this.smg = null;              // Placeholder for the source file generator.
+  this.length = 0;              // The total binry size.
 
   fever.emit('add', this);
   if (path) this.push(file);
@@ -71,7 +72,6 @@ File.prototype.fingerprinter = function fingerprinter(contents) {
   });
 
   this.alias = md5.digest('hex');
-
   return this;
 };
 
@@ -147,7 +147,10 @@ File.prototype.modified = function modified() {
     file: this.alias
   });
 
+  this.length = 0;
   contents.forEach(function each(file) {
+    this.length += file.content.length;
+
     // @TODO check if we need to add an exiting file map.
     this.smg.setSourceContent(file.path, file.content.toString());
   }, this);

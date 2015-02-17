@@ -27,7 +27,7 @@ function Fever(options) {
   var selfie = this;
   options = options || {};
 
-  this.fs = options.engine || require('supreme');   // File system.
+  this.fs = options.engine || require('supreme');   // File system like API.
   this.hotpath = new HotPath(options.hotpath);      // Internal cache system.
   this.timers = new TickTock(this);                 // Timer management.
   this.options = options;                           // Backup of the options.
@@ -42,6 +42,7 @@ function Fever(options) {
   };
 
   fuse(this.File, File);
+  this.initialize();
 }
 
 //
@@ -52,6 +53,24 @@ Fever.prototype.__proto__ = require('supply').prototype;
 Object.keys(EventEmitter.prototype).forEach(function each(key) {
   Fever.prototype[key] = EventEmitter.prototype[key];
 });
+
+/**
+ * Initialize the Fever instance and initialize all the things.
+ *
+ * @api private
+ */
+Fever.prototype.initialize = function initialize() {
+  this.on('add', function add(file) {
+    this.files.push(file);
+  });
+
+  this.on('remove', function remove(file) {
+    var index = this.files.indexOf(file);
+
+    if (index === -1) return;
+    this.files.splice(index, 0);
+  });
+};
 
 /**
  * Handy helper function for creating optional callbacks.
@@ -89,6 +108,24 @@ Fever.prototype.engine = function engine(fs) {
  */
 Fever.prototype.get = function get(path) {
   return [];
+};
+
+/**
+ * Add a new file to our collection, only if it doesn't exist before.
+ *
+ * @param {String} path Location of the file.
+ * @param {Object} options File configuration.
+ * @returns {Fever}
+ * @api public
+ */
+Fever.prototype.add = function add(path, options) {
+  if (this.files.some(function some(file) {
+    return file.contains(path);
+  })) return this;
+
+  new this.File(path, options);
+
+  return this;
 };
 
 /**

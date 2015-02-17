@@ -3,6 +3,7 @@
 var debug = require('diagnostics')('fever:file')
   , EventEmitter = require('eventemitter3')
   , hash = require('crypto').createHash
+  , destroy = require('demolish')
   , sm = require('source-map')
   , path = require('path')
   , fs = require('fs');
@@ -27,7 +28,7 @@ function File(fever, file, options) {
   this.fever = fever;           // Reference to the fever instance.
   this.alias = '';              // Alias of the file, also known as fingerprint.
   this.smg = null;              // Placeholder for the source file generator.
-  this.length = 0;              // The total binry size.
+  this.length = 0;              // The total binary size.
 
   fever.emit('add', this);
   if (file) this.push(file);
@@ -115,6 +116,19 @@ File.prototype.buffer = function buffer(fn) {
 };
 
 /**
+ * Check if the our internal contents array contains a given file.
+ *
+ * @param {String} file Full path of the file we should search for.
+ * @returns {Boolean}
+ * @api public
+ */
+File.prototype.contains = function contains(file) {
+  return this.contents.some(function some(name) {
+    return name === file;
+  });
+};
+
+/**
  * Something in this file has been modified, we need to re-calculate all the
  * things:
  *
@@ -177,11 +191,11 @@ File.prototype.forward = function forward(what, options) {
  * @returns {File}
  * @api public
  */
-File.prototype.destroy = function destroy() {
-  this.fever.emit('remove', this);
-
-  return this;
-};
+File.prototype.destroy = destroy('requested, contents, fever, alias, smg, length', {
+  before: function before() {
+    this.fever.emit('remove', this);
+  }
+});
 
 //
 // Expose the module.

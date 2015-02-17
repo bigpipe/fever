@@ -2,11 +2,36 @@ describe('File', function () {
   'use strict';
 
   var assume = require('assume')
-    , File = require('./file');
+    , path = require('path')
+    , Fever = require('./')
+    , fever
+    , File
+    , file;
+
+  beforeEach(function each() {
+    fever = new Fever();
+    File = fever.File;
+    file = new File();
+  });
+
+  afterEach(function each() {
+    file.destroy();
+  });
 
   it('has a middleware system');
   it('is an event emitter');
   it('adds it self to the factory when created');
+
+  describe('#length', function () {
+    it('has an initial length of 0', function () {
+      assume(file.length).equals(0);
+    });
+
+    it('increases when a new file is added', function () {
+      file.push(path.join(__dirname, 'fixtures', 'events.js'));
+      assume(file.length).equals(8921);
+    });
+  });
 
   describe('#forward', function () {
     it('increments the .requested property');

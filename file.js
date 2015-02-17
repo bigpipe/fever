@@ -30,7 +30,7 @@ function File(fever, file, options) {
   this.length = 0;              // The total binry size.
 
   fever.emit('add', this);
-  if (path) this.push(file);
+  if (file) this.push(file);
 }
 
 //
@@ -127,7 +127,7 @@ File.prototype.buffer = function buffer(fn) {
 File.prototype.modified = function modified() {
   var contents = this.contents.map(function map(file) {
     return {
-      content: fs.readFileSync(__dirname),
+      content: fs.readFileSync(file),
       path: file
     };
   });

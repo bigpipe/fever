@@ -6,6 +6,7 @@ var debug = require('diagnostics')('fever')
   , destroy = require('demolish')
   , HotPath = require('hotpath')
   , parse = require('url').parse
+  , Supply = require('supply')
   , fuse = require('fusing')
   , File = require('./file');
 
@@ -16,6 +17,7 @@ var debug = require('diagnostics')('fever')
  *
  * - hotpath, {Object}, Configuration for our hotpath cache.
  * - engine, {FileSystem}, The file system where we store and get our files.
+ * - recache, {Number} Every x amount of requests we should try to re-cache files.
  *
  * @constructor
  * @param {Object} options Fever configuration.
@@ -23,14 +25,18 @@ var debug = require('diagnostics')('fever')
  */
 function Fever(options) {
   if (!this) return new Fever(options);
+  Supply.call(this);
 
   var selfie = this;
   options = options || {};
 
   this.fs = options.engine || require('supreme');   // File system like API.
+  this.dir = options.directory || __dirname;        // Asset compile directory.
   this.hotpath = new HotPath(options.hotpath);      // Internal cache system.
+  this.recache = options.recache || 10000;          // Amount of requests to trigger re-cache.
   this.timers = new TickTock(this);                 // Timer management.
   this.options = options;                           // Backup of the options.
+  this.requested = 0;                               // Amount of requests we handled.
   this.files = [];                                  // Active files.
 
   //
@@ -49,7 +55,8 @@ function Fever(options) {
 // Supply provides our middleware and plugin system, so we're going to inherit
 // from it.
 //
-Fever.prototype.__proto__ = require('supply').prototype;
+Fever.prototype.__proto__ = Supply.prototype;
+Fever.prototype.emits = require('emits');
 Object.keys(EventEmitter.prototype).forEach(function each(key) {
   Fever.prototype[key] = EventEmitter.prototype[key];
 });
@@ -167,13 +174,45 @@ Fever.prototype.cache = function cache(fn) {
 Fever.prototype.mount = function mount(server, options) {
   var selfie = this;
 
+  /**
+   * Handle the incoming files.
+   *
+   * @param {Request} req Incoming HTTP request.
+   * @param {Response} res Outgoing HTTP response.
+   * @param {Function} next Continuation of middleware.
+   * @api private
+   */
   function fever(req, res, next) {
     req.uri = req.uri || parse(req.url);
 
-    var file = selfie.alias(req.uri.pathname);
-    if (!file || 'GET' !== req.method) return next();
+    var file = selfie.alias(req.uri.pathname)
+      , cache;
 
-    file.forward(res, { gzip: req.zipline, headers: req.headers });
+    if (
+         !file
+      || 'GET' !== req.method
+      || !file.length.raw
+    ) return next();
+
+    //
+    // As we can handle the file we need to check if we should start a re-cache
+    // procedure so our most requested files can float around in memory. And we
+    // want to make sure that we're serving up to date assets from our hot cache.
+    //
+    selfie.requested++;
+
+    if (selfie.request % selfie.recache === 0) {
+      selfie.cache();
+    }
+
+    file.setHeader(req, res);
+    cache = selfie.hotpath.get(req.uri.pathname);
+    if (cache) return res.end(cache);
+
+    file.forward(res, {
+      encoding: req.zipline,
+      headers: req.headers
+    });
   }
 
   if (server && 'function' === typeof server.use) {
@@ -189,6 +228,7 @@ Fever.prototype.mount = function mount(server, options) {
  *
  * @TODO cleanup Supply based data.
  * @TODO cleanup EventEmitter properties.
+ * @TODO clean up all files.
  *
  * @type {Function}
  * @returns {Boolean}

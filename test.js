@@ -9,7 +9,10 @@ describe('File', function () {
     , file;
 
   beforeEach(function each() {
-    fever = new Fever();
+    fever = new Fever({
+      directory: path.join(__dirname, 'fixtures', 'dist')
+    });
+
     File = fever.File;
     file = new File();
   });
@@ -35,22 +38,31 @@ describe('File', function () {
 
   it('adds it self to the factory when created');
 
-  describe('#length', function () {
-    it('has an initial length of 0', function () {
-      assume(file.length).equals(0);
+  describe('#size', function () {
+    it('has an initial size of 0', function () {
+      assume(file.size.raw).equals(0);
+      assume(file.size.deflate).equals(0);
+      assume(file.size.gzip).equals(0);
     });
 
-    it('increases when a new file is added', function () {
-      file.push(path.join(__dirname, 'fixtures', 'events.js'));
-      assume(file.length).equals(8921);
+    it('increases when a new file is added', function (next) {
+      file.push(path.join(__dirname, 'fixtures', 'events.js'), function (err) {
+        assume(file.size.raw).equals(8921);
+        next(err);
+      });
     });
 
     it('decreases when a file is removed', function () {
-      file.push(path.join(__dirname, 'fixtures', 'events.js'));
-      assume(file.length).equals(8921);
+      file.push(path.join(__dirname, 'fixtures', 'events.js'), function (err) {
+        if (err) return next(err);
 
-      file.pop();
-      assume(file.length).equals(0);
+        assume(file.size.raw).equals(8921);
+
+        file.pop(null, function (err) {
+          assume(file.size.raw).equals(0);
+          next(err);
+        });
+      });
     });
   });
 
@@ -84,7 +96,9 @@ describe('Fever', function () {
     , fever;
 
   beforeEach(function each() {
-    fever = new Fever();
+    fever = new Fever({
+      directory: path.join(__dirname, 'fixtures', 'dist')
+    });
   });
 
   afterEach(function each() {

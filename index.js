@@ -122,7 +122,7 @@ Fever.prototype.get = function get(path) {
  *
  * @param {String} path Location of the file.
  * @param {Object} options File configuration.
- * @returns {Fever}
+ * @returns {File}
  * @api public
  */
 Fever.prototype.add = function add(path, options) {
@@ -130,9 +130,7 @@ Fever.prototype.add = function add(path, options) {
     return file.contains(path);
   })) return this;
 
-  new this.File(path, options);
-
-  return this;
+  return new this.File(path, options);
 };
 
 /**
@@ -234,7 +232,7 @@ Fever.prototype.mount = function mount(server, options) {
  * @returns {Boolean}
  * @api public
  */
-Fever.prototype.destroy = destroy('fs, hotpath, timers, options, files');
+Fever.prototype.destroy = destroy('fs, hotpath, timers, options, files, File');
 
 //
 // Expose the module.
